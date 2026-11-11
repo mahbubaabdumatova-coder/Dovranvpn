@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPN Panel</title>
+<style>
+:root{--bg:#02050c;--card:#060d1c;--ink:#e0efff;--mute:#7f9cc4;--line:#12306a;--neon:#2f8cff;--neon2:#5ee1ff;--bad:#ff5c7a;--ok:#35e0ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;
+background-image:radial-gradient(ellipse at 50% -10%,rgba(47,140,255,.22),transparent 60%)}
+button,input{font:inherit;color:inherit}
+.hide{display:none!important}
+h1,h2,b,strong{letter-spacing:.2px}
+.glow{color:var(--neon2);text-shadow:0 0 6px var(--neon),0 0 18px var(--neon),0 0 36px rgba(47,140,255,.6);animation:flick 3.2s infinite}
+@keyframes flick{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.78}52%{opacity:1}}
+@keyframes pulse{0%,100%{box-shadow:0 0 4px var(--neon),0 0 10px var(--neon)}50%{box-shadow:0 0 10px var(--neon2),0 0 26px var(--neon)}}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.box{background:var(--card);border:1px solid var(--neon);border-radius:16px;padding:28px;width:100%;max-width:360px;box-shadow:0 0 12px rgba(47,140,255,.5),0 0 40px rgba(47,140,255,.25),inset 0 0 18px rgba(47,140,255,.12)}
+.box h1{margin:0 0 4px;font-size:28px}
+.box p{margin:0 0 18px;color:var(--mute);font-size:14px}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
+input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#030816}
+input:focus{outline:0;border-color:var(--neon2);box-shadow:0 0 10px rgba(94,225,255,.6)}
+button:focus-visible{outline:2px solid var(--neon2);outline-offset:2px}
+.btn{background:linear-gradient(135deg,#1f6fe0,#2f8cff);color:#fff;border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer;box-shadow:0 0 12px rgba(47,140,255,.7);transition:box-shadow .2s}
+.btn:hover{box-shadow:0 0 22px var(--neon2)}
+.btn.full{width:100%;margin-top:18px}
+.btn.ghost{background:transparent;border:1px solid var(--neon);box-shadow:0 0 8px rgba(47,140,255,.4);color:var(--neon2)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.del{background:transparent;border:1px solid var(--bad);color:var(--bad);box-shadow:0 0 8px rgba(255,92,122,.35)}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:10px}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(2,5,12,.9);border-bottom:1px solid var(--neon);box-shadow:0 0 16px rgba(47,140,255,.35);position:sticky;top:0;z-index:5;backdrop-filter:blur(6px)}
+header b{font-size:20px}
+nav{display:flex;gap:8px;padding:12px 16px;overflow-x:auto}
+nav button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 16px;cursor:pointer;white-space:nowrap;color:var(--mute)}
+nav button.on{border-color:var(--neon2);color:#fff;background:rgba(47,140,255,.18);box-shadow:0 0 14px rgba(47,140,255,.7)}
+main{padding:4px 16px 40px;max-width:980px;margin:0 auto}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 0 12px rgba(47,140,255,.15),inset 0 0 14px rgba(47,140,255,.06)}
+.stat{padding:14px;border-color:#1b4aa0}
+.stat span{font-size:13px;color:var(--mute)}
+.stat strong{display:block;font-size:28px;margin-top:2px;color:var(--neon2);text-shadow:0 0 10px var(--neon)}
+.card{padding:14px;margin-top:12px}
+.card h2{margin:0 0 10px;font-size:17px;color:var(--neon2)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row>div{flex:1 1 130px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+th{text-align:left;color:var(--mute);font-weight:500;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid #0c1d40;vertical-align:middle}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid}
+.tag.ok{color:var(--ok);border-color:var(--ok);text-shadow:0 0 6px var(--ok)}
+.tag.bad{color:var(--bad);border-color:var(--bad)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:blink 1.4s infinite}
+.tag.bad .dot{animation:none;opacity:.5}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px currentColor}50%{opacity:.25;box-shadow:none}}
+.bar{height:6px;background:#0c1d40;border-radius:3px;margin-top:5px;min-width:80px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));border-radius:3px;box-shadow:0 0 8px var(--neon)}
+.srv{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #0c1d40}
+.srv:last-child{border:0}
+.srv small{color:var(--mute);display:block}
+.cfg{background:#030816;border:1px dashed var(--neon);border-radius:9px;padding:10px;font-size:12px;word-break:break-all;margin-top:10px;color:var(--neon2)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--neon2);border:1px solid var(--neon);padding:10px 16px;border-radius:9px;font-size:14px;box-shadow:0 0 18px var(--neon)}
+textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#030816;color:inherit;font:inherit;resize:vertical}
+textarea:focus{outline:0;border-color:var(--neon2);box-shadow:0 0 10px rgba(94,225,255,.6)}
+.sw{display:inline-block;width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;margin:4px 8px 4px 0;box-shadow:0 0 10px currentColor}
+.sw.on{border-color:#fff}
+.chk{display:flex;gap:10px;align-items:center;margin:8px 0;color:var(--ink);font-size:14px}
+.chk input{width:auto}
+.hint{font-size:12px;color:var(--mute);margin-top:10px}
+.modal{position:fixed;inset:0;background:#02050c;z-index:20;display:flex;flex-direction:column}
+.modal>div{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--neon)}
+.modal iframe{flex:1;border:0;width:100%}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<section class="login" id="login">
+  <div class="box">
+    <h1 class="glow">VPN Panel</h1>
+    <p>Admin hasabyňyz bilen giriň</p>
+    <label for="u">Ulanyjy ady</label>
+    <input id="u" autocomplete="username">
+    <label for="p">Parol</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div class="err" id="err"></div>
+    <button class="btn full" id="go">Girmek</button>
+  </div>
+</section>
+
+<div id="app" class="hide">
+  <header><b class="glow">VPN Panel</b><span style="display:flex;gap:10px;align-items:center"><small id="me" style="color:var(--mute)"></small><button class="btn ghost sm" id="out">Çykmak</button></span></header>
+  <nav id="nav">
+    <button data-t="dash" class="on">Esasy</button>
+    <button data-t="users">Ulanyjylar</button>
+    <button data-t="servers">Serwerler</button>
+    <button data-t="admins">Adminlar</button>
+    <button data-t="builder">Gurujy</button>
+  </nav>
+  <main>
+    <div id="dash">
+      <div class="stats" id="stats"></div>
+      <div class="card"><h2>Soňky goşulanlar</h2><div class="scroll"><table id="recent"></table></div></div>
+    </div>
+
+    <div id="users" class="hide">
+      <div class="card">
+        <h2>Täze ulanyjy</h2>
+        <div class="row">
+          <div><label for="nu">Ady</label><input id="nu" placeholder="mysal: ali01"></div>
+          <div><label for="nd">Möhleti (gün)</label><input id="nd" type="number" value="30" min="1"></div>
+          <div><label for="ng">Traffic (GB)</label><input id="ng" type="number" value="50" min="1"></div>
+          <div><button class="btn" id="add">Goşmak</button></div>
+        </div>
+      </div>
+      <div class="card"><h2>Ulanyjylar</h2><div class="scroll"><table id="ut"></table></div></div>
+      <div class="card hide" id="cfgc"><h2>Subscription link</h2><div class="cfg" id="cfg"></div>
+        <button class="btn sm ghost" id="copy" style="margin-top:10px">Göçürmek</button></div>
+    </div>
+
+    <div id="servers" class="hide">
+      <div class="card">
+        <h2>Täze serwer</h2>
+        <div class="row">
+          <div><label for="sn">Ady</label><input id="sn" placeholder="mysal: Aşgabat-1"></div>
+          <div><label for="si">IP adres</label><input id="si" placeholder="203.0.113.10"></div>
+          <div style="flex-basis:100%"><label for="sk">Konfigurasiýa linki (vless://, vmess://, trojan:// ýa-da https:// subscription)</label><input id="sk" placeholder="vless://uuid@ip:443?...#at" autocomplete="off"></div>
+          <div><button class="btn" id="sadd">Goşmak</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Köp serwer goş</h2>
+        <label for="bk">Her setire bir link (vless://, https:// we ş.m., 20 ýa-da köp)</label>
+        <textarea id="bk" rows="6" placeholder="vless://...#Aşgabat-1&#10;vless://...#Stambul-1&#10;vless://...#Frankfurt-1"></textarea>
+        <button class="btn full" id="bkadd">Ählisini goş</button>
+        <div class="hint">Ady linkiň <b>#</b> bölüminden alynýar, IP adres link içinden awtomatiki okalýar. Eýýäm bar link gaýtadan goşulmaýar.</div>
+      </div>
+      <div class="card"><h2>Serwerler</h2><div id="sl"></div>
+        <button class="btn sm del" id="sclean" style="margin-top:12px">Link ýok serwerleri poz (demo)</button>
+        <div class="hint">Linkde <b>{name}</b> ýazsaň, ulanyjynyň ady bilen çalşylýar. <b>{uuid}</b> ýazsaň, her kod üçin täze UUID goýulýar (serwer şol UUID-i kabul etmeli). <b>https://</b> link subscription URL bolup biler (mysal: Marzban linki), ol okalyp içindäki serwerler jemlenýär.</div></div>
+    </div>
+
+    <div id="admins" class="hide">
+      <div class="card">
+        <h2>Täze admin</h2>
+        <div class="row">
+          <div><label for="an">Ulanyjy ady</label><input id="an" autocomplete="off"></div>
+          <div><label for="ap">Parol (iň az 6)</label><input id="ap" type="password" autocomplete="new-password"></div>
+          <div><button class="btn" id="aadd">Goşmak</button></div>
+        </div>
+      </div>
+      <div class="card"><h2>Adminlar</h2><div id="al"></div></div>
+      <div class="card">
+        <h2>Paroly üýtget</h2>
+        <div class="row">
+          <div><label for="op">Köne parol</label><input id="op" type="password" autocomplete="current-password"></div>
+          <div><label for="np">Täze parol (iň az 6)</label><input id="np" type="password" autocomplete="new-password"></div>
+          <div><button class="btn" id="achg">Üýtgetmek</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="builder" class="hide">
+      <div class="card">
+        <h2>Täze panel (başga adam üçin)</h2>
+        <label for="bn">Panel ady</label><input id="bn" placeholder="mysal: Ali panel">
+        <label for="bu">Ol adamyň login ady</label><input id="bu" autocomplete="off" placeholder="mysal: ali">
+        <label for="bp">Ol adamyň paroly (iň az 6)</label><input id="bp" type="password" autocomplete="new-password">
+        <label>Reňk</label>
+        <div id="sws">
+          <span class="sw on" data-c="#2f8cff" style="background:#2f8cff;color:#2f8cff"></span>
+          <span class="sw" data-c="#22d39a" style="background:#22d39a;color:#22d39a"></span>
+          <span class="sw" data-c="#a06bff" style="background:#a06bff;color:#a06bff"></span>
+          <span class="sw" data-c="#ff9f2e" style="background:#ff9f2e;color:#ff9f2e"></span>
+          <span class="sw" data-c="#ff4d6d" style="background:#ff4d6d;color:#ff4d6d"></span>
+        </div>
+        <label>Haýsy serwerleri ulanyp biler</label>
+        <button class="btn sm ghost" id="bsall" type="button">Hemmesini saýla / aýyr</button>
+        <div id="bsv"></div>
+        <label for="bm">Iň köp kod sany (0 = çäksiz)</label><input id="bm" type="number" value="50" min="0">
+        <button class="btn full" id="bmk">Panel döret</button>
+        <div class="hint">Ol adamyň paneli diňe <b>kod</b> döredip biler we diňe saýlan serwerleri görer. Täze panel ýa-da serwer goşup bilmez.</div>
+      </div>
+      <div class="card"><h2>Döredilen paneller</h2><div id="bl"></div>
+        <div class="hint">Faýl: ýükleýär. GitHub-da <b>panels/ady.html</b> ýoly bilen ýükleseň, Netlify-da <b>/panels/ady.html</b> adresinde açylar. Soň şol linki we login/paroly şol adama ber.</div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="modal hide" id="mod"><div><b class="glow">Panel görnüşi</b><button class="btn ghost sm" id="mclose">Ýap</button></div><iframe id="pv" sandbox="allow-scripts allow-same-origin" title="Panel"></iframe></div>
+<div class="toast hide" id="toast"></div>
+
+<script>
+/* ===== SAZLAMALAR ===== */
+var ADMIN_USER = "admin";
+var ADMIN_PASS = "1234";           // DEMO: üýtget!
+var API_URL = "";                  // Soň serwer API adresi
+var DOMAIN = "panel.example.com";  // Soň öz domeniň
+
+/* ===== MAGLUMAT ===== */
+var servers = ld("vp_servers") || [
+  {n:"Aşgabat-1", ip:"203.0.113.10", on:true, load:42},
+  {n:"Stambul-1", ip:"203.0.113.22", on:true, load:67},
+  {n:"Frankfurt-1", ip:"203.0.113.35", on:false, load:0}
+];
+var users = ld("vp_users") || [
+  {name:"ali01",  days:24, used:12.4, limit:50,  on:true},
+  {name:"maral",  days:8,  used:46.1, limit:50,  on:true},
+  {name:"serdar", days:0,  used:20,   limit:100, on:false}
+];
+
+function ld(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function toast(m){var t=$("toast");t.textContent=m;t.classList.remove("hide");setTimeout(function(){t.classList.add("hide")},2000)}
+
+/* ===== LOGIN / ADMINLAR ===== */
+var admins = ld("vp_admins"), me = "";
+async function hs(p){
+  if(!window.crypto||!crypto.subtle) return "p:"+p;
+  var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("vp::"+p));
+  return [].map.call(new Uint8Array(b),function(x){return ("0"+x.toString(16)).slice(-2)}).join("");
+}
+function enter(){$("login").classList.add("hide");$("app").classList.remove("hide");$("me").textContent=me;render()}
+$("go").onclick=async function(){
+  var u=$("u").value.trim(), h=await hs($("p").value);
+  var a=admins.filter(function(x){return x.u===u&&x.h===h})[0];
+  if(a){me=u;try{sessionStorage.setItem("vp_in",u)}catch(e){} $("p").value="";enter()}
+  else $("err").textContent="Ulanyjy ady ýa-da parol nädogry";
+};
+$("p").onkeydown=function(e){if(e.key==="Enter")$("go").click()};
+$("out").onclick=function(){try{sessionStorage.removeItem("vp_in")}catch(e){} location.reload()};
+(async function(){
+  if(!admins||!admins.length){admins=[{u:ADMIN_USER,h:await hs(ADMIN_PASS),main:true}];sv("vp_admins",admins)}
+  try{var s=sessionStorage.getItem("vp_in");if(s&&admins.some(function(a){return a.u===s})){me=s;enter()}}catch(e){}
+})();
+
+/* ===== TAB ===== */
+$("nav").onclick=function(e){
+  var t=e.target.dataset.t; if(!t)return;
+  ["dash","users","servers","admins","builder"].forEach(function(x){$(x).classList.toggle("hide",x!==t)});
+  [].forEach.call($("nav").children,function(b){b.classList.toggle("on",b===e.target)});
+};
+
+/* ===== RENDER ===== */
+function st(a,b){return "<div class='stat'><span>"+a+"</span><strong>"+b+"</strong></div>"}
+function tag(ok,a,b){return "<span class='tag "+(ok?"ok":"bad")+"'><i class='dot'></i>"+(ok?a:b)+"</span>"}
+function utag(u){return tag(u.on&&u.days>0,"Işjeň","Gutardy")}
+function render(){
+  var act=users.filter(function(u){return u.on&&u.days>0}).length;
+  var tot=users.reduce(function(a,u){return a+u.used},0).toFixed(1);
+  var onl=servers.filter(function(s){return s.on}).length;
+  $("stats").innerHTML=st("Ulanyjylar",users.length)+st("Işjeň",act)+st("Traffic (GB)",tot)+st("Serwer online",onl+"/"+servers.length);
+  $("recent").innerHTML="<tr><th>Ady</th><th>Möhlet</th><th>Ýagdaý</th></tr>"+
+    users.slice(-5).reverse().map(function(u){return "<tr><td>"+esc(u.name)+"</td><td>"+u.days+" gün</td><td>"+utag(u)+"</td></tr>"}).join("");
+  $("ut").innerHTML="<tr><th>Ady</th><th>Traffic</th><th>Möhlet</th><th>Ýagdaý</th><th></th></tr>"+
+    users.map(function(u,i){
+      var p=Math.min(100,Math.round(u.used/u.limit*100));
+      return "<tr><td>"+esc(u.name)+"</td><td>"+u.used+" / "+u.limit+" GB<div class='bar'><i style='width:"+p+"%'></i></div></td><td>"+u.days+" gün</td><td>"+utag(u)+"</td><td style='white-space:nowrap'><button class='btn sm ghost' data-l='"+i+"'>Link</button> <button class='btn sm del' data-d='"+i+"'>Poz</button></td></tr>";
+    }).join("");
+  $("sl").innerHTML=servers.map(function(s,i){
+    return "<div class='srv'><div><b>"+esc(s.n)+"</b><small>"+esc(s.ip)+" · "+(s.link?(/^https:/i.test(s.link)?"https sub":"link bar"):"link ýok")+"</small></div><div style='display:flex;gap:8px;align-items:center'>"+tag(s.on,"Online","Offline")+"<button class='btn sm del' data-s='"+i+"'>Poz</button></div></div>";
+  }).join("")||"<small style='color:var(--mute)'>Serwer ýok. Ýokardan goş.</small>";
+  rA();rBS();
+}
+
+/* ===== ULANYJY ===== */
+$("add").onclick=function(){
+  var n=$("nu").value.trim(), d=+$("nd").value, g=+$("ng").value;
+  if(!n||d<1||g<1){toast("Ähli ýerleri dolduryň");return}
+  if(users.some(function(u){return u.name===n})){toast("Bu at bar");return}
+  users.push({name:n,days:d,used:0,limit:g,on:true});
+  sv("vp_users",users);$("nu").value="";render();toast("Goşuldy");
+};
+$("ut").onclick=function(e){
+  var d=e.target.dataset.d,l=e.target.dataset.l;
+  if(d!==undefined && confirm("Pozmalymy?")){users.splice(+d,1);sv("vp_users",users);render();$("cfgc").classList.add("hide")}
+  if(l!==undefined){
+    var base=API_URL||("https://"+DOMAIN);
+    $("cfg").textContent=base+"/sub/"+encodeURIComponent(users[+l].name);
+    $("cfgc").classList.remove("hide");
+  }
+};
+$("copy").onclick=function(){
+  try{navigator.clipboard.writeText($("cfg").textContent);toast("Göçürildi")}catch(e){toast("Göçürip bilmedi")}
+};
+
+/* ===== SERWER ===== */
+$("sadd").onclick=function(){
+  var n=$("sn").value.trim(), ip=$("si").value.trim(), k=$("sk").value.trim();
+  if(!n||!ip){toast("Ady we IP ýaz");return}
+  if(k&&!/^((vless|vmess|trojan|ss):\/\/|https:\/\/)/i.test(k)){toast("Link vless://, vmess://, trojan://, ss:// ýa-da https:// bilen başlanmaly");return}
+  servers.push({n:n,ip:ip,link:k,on:true,load:0});
+  sv("vp_servers",servers);$("sn").value="";$("si").value="";$("sk").value="";render();toast("Serwer goşuldy");
+};
+$("bkadd").onclick=function(){
+  var lines=$("bk").value.split(/\r?\n/).map(function(x){return x.trim()}).filter(Boolean), add=0, bad=0, dup=0;
+  lines.forEach(function(l){
+    if(!/^((vless|vmess|trojan|ss):\/\/|https:\/\/)/i.test(l)){bad++;return}
+    if(servers.some(function(x){return x.link===l})){dup++;return}
+    var n="", ip="", h=l.indexOf("#"), m;
+    if(h>-1){try{n=decodeURIComponent(l.slice(h+1))}catch(e){n=l.slice(h+1)}}
+    m=/^https:/i.test(l)?l.match(/^https:\/\/([^\/:?#]+)/):l.match(/@([^:\/?#]+)/); if(m) ip=m[1];
+    if(!n&&/^https:/i.test(l)&&m) n=m[1];
+    if(/^vmess:/i.test(l)){try{var j=JSON.parse(decodeURIComponent(escape(atob(l.slice(8).split("#")[0]))));n=n||j.ps||"";ip=j.add||ip}catch(e){}}
+    servers.push({n:n||("Server "+(servers.length+1)),ip:ip||"-",link:l,on:true,load:0});add++;
+  });
+  if(add){sv("vp_servers",servers);$("bk").value="";render()}
+  toast(add+" goşuldy"+(dup?", "+dup+" gaýtalanan"+"":"")+(bad?", "+bad+" nädogry":""));
+};
+$("sclean").onclick=function(){
+  var k=servers.filter(function(x){return x.link});
+  if(k.length===servers.length){toast("Link ýok serwer ýok");return}
+  if(confirm("Link ýok serwerleri pozmalymy?")){servers=k;sv("vp_servers",servers);render()}
+};
+$("bsall").onclick=function(){
+  var c=[].filter.call($("bsv").querySelectorAll("input"),function(x){return !x.disabled});
+  var all=c.every(function(x){return x.checked});
+  c.forEach(function(x){x.checked=!all});
+};
+$("sl").onclick=function(e){
+  var s=e.target.dataset.s;
+  if(s!==undefined && confirm("Pozmalymy?")){servers.splice(+s,1);sv("vp_servers",servers);render()}
+};
+
+/* ===== ADMIN BÖLÜMI ===== */
+function rA(){
+  $("al").innerHTML=admins.map(function(a,i){
+    var del=(!a.main&&a.u!==me)?"<button class='btn sm del' data-a='"+i+"'>Poz</button>":"";
+    return "<div class='srv'><div><b>"+esc(a.u)+"</b><small>"+(a.main?"Baş admin":"Admin")+(a.u===me?" · sen":"")+"</small></div>"+del+"</div>";
+  }).join("");
+}
+$("aadd").onclick=async function(){
+  var n=$("an").value.trim(), p=$("ap").value;
+  if(!n||p.length<6){toast("Ady we iň az 6 belgili parol ýaz");return}
+  if(admins.some(function(a){return a.u===n})){toast("Bu at bar");return}
+  admins.push({u:n,h:await hs(p)});sv("vp_admins",admins);
+  $("an").value="";$("ap").value="";rA();toast("Admin goşuldy");
+};
+$("al").onclick=function(e){
+  var i=e.target.dataset.a;
+  if(i!==undefined && confirm("Admini pozmalymy?")){admins.splice(+i,1);sv("vp_admins",admins);rA()}
+};
+$("achg").onclick=async function(){
+  var o=$("op").value, n=$("np").value;
+  if(n.length<6){toast("Täze parol iň az 6 belgi");return}
+  var a=admins.filter(function(x){return x.u===me})[0];
+  if(!a||a.h!==await hs(o)){toast("Köne parol nädogry");return}
+  a.h=await hs(n);sv("vp_admins",admins);
+  $("op").value="";$("np").value="";toast("Parol üýtgedi");
+};
+
+/* ===== GURUJY: başga adam üçin kod paneli ===== */
+var panels = ld("vp_panels") || [], bc = "#2f8cff";
+function slug(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"panel"}
+
+/* Döredilen panelyň içindäki işleýän kod (özbaşdak sahypada işleýär) */
+function rt(C){
+  var K="gp_"+C.id, D, $=function(i){return document.getElementById(i)};
+  try{D=JSON.parse(localStorage.getItem(K))}catch(e){}
+  D=D||[];
+  function E(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function S(){try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}}
+  async function H(p){
+    if(!window.crypto||!crypto.subtle) return "p:"+p;
+    var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("vp::"+p));
+    return [].map.call(new Uint8Array(b),function(x){return ("0"+x.toString(16)).slice(-2)}).join("");
+  }
+  function code(){
+    var c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", a=new Uint8Array(12), r="";
+    crypto.getRandomValues(a);
+    for(var i=0;i<12;i++){r+=c[a[i]%c.length];if(i%4==3&&i<11)r+="-"}
+    return r;
+  }
+  function uid(){
+    var a=new Uint8Array(16); crypto.getRandomValues(a); a[6]=a[6]&15|64; a[8]=a[8]&63|128;
+    var h=[].map.call(a,function(x){return ("0"+x.toString(16)).slice(-2)}).join("");
+    return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+  }
+  async function links(x){
+    var out=[], bad=[], k, s, l, i;
+    for(k=0;k<C.servers.length;k++){
+      s=C.servers[k];
+      l=s.l.split("{name}").join(encodeURIComponent(x.n)).split("{uuid}").join(x.u);
+      if(/^https:\/\//i.test(l)){
+        try{
+          var ac=new AbortController(), tm=setTimeout(function(){ac.abort()},8000);
+          var r=await fetch(l,{signal:ac.signal}); clearTimeout(tm);
+          var t=(await r.text()).trim(), d=t;
+          try{var dd=atob(t.replace(/\s/g,"")); if(dd.indexOf("://")>-1){try{d=decodeURIComponent(escape(dd))}catch(e){d=dd}}}catch(e){}
+          var got=d.split(/\r?\n/).map(function(z){return z.trim()}).filter(function(z){return /^(vless|vmess|trojan|ss|hy2|hysteria2|tuic):\/\//i.test(z)});
+          if(!got.length) throw 0;
+          got.forEach(function(z,j){
+            var h=z.indexOf("#"); if(h>-1) z=z.slice(0,h);
+            out.push(z+"#"+encodeURIComponent(s.n+(got.length>1?" "+(j+1):"")+" | "+x.n));
+          });
+        }catch(e){bad.push(s.n)}
+      }else{
+        i=l.indexOf("#"); if(i>-1) l=l.slice(0,i);
+        out.push(l+"#"+encodeURIComponent(s.n+" | "+x.n));
+      }
+    }
+    return {l:out,bad:bad};
+  }
+  async function sub(x){var r=await links(x);return {t:"#profile-title: "+x.n+"\n"+r.l.join("\n"),bad:r.bad}}
+  function b64(t){return btoa(unescape(encodeURIComponent(t)))}
+  function base(){return location.protocol.indexOf("http")==0?location.origin:C.base}
+  function cp(t,btn){
+    try{navigator.clipboard.writeText(t);var o=btn.textContent;btn.textContent="Göçürildi";setTimeout(function(){btn.textContent=o},1500)}catch(e){prompt("Göçür:",t)}
+  }
+  function R(){
+    var h="<div class='st'><div><span>Kodlar</span><b>"+D.length+(C.max?" / "+C.max:"")+"</b></div><div><span>Serwerler</span><b>"+C.servers.length+"</b></div></div>";
+    h+="<section><h2>Täze kod</h2><div class='row'><input id='cn' placeholder='Ulanyjy ady'><input id='cd' type='number' value='30' min='1' title='Gün'><input id='cg' type='number' value='50' min='1' title='GB'><button id='cm'>Kod döret</button></div><small>Ady · möhlet (gün) · traffic (GB). Ähli serwerler 1 Happ-a jemlenýär.</small></section>";
+    h+="<section><h2>Kodlar</h2>"+(D.map(function(x,i){
+      return "<div class='it' style='flex-wrap:wrap'><div><b>"+E(x.n)+"</b><small>"+E(x.c)+"</small><small>"+C.servers.length+" serwer · "+x.d+" gün · "+x.g+" GB</small></div><div style='display:flex;gap:6px;flex-wrap:wrap'><button data-ln='"+i+"'>Happ linkler</button><button data-hp='"+i+"'>Happ URL</button><button data-fl='"+i+"'>Faýl</button><button class='x' data-del='"+i+"'>Poz</button></div></div>";
+    }).join("")||"<small>Heniz kod ýok.</small>")+"<small style='margin-top:10px'>Happ linkler: bas, Happ-da + → Paste. Happ URL işlemegi üçin Faýl-y sub/ papkasyna ýükle.</small></section>";
+    $("m").innerHTML=h;
+  }
+  function show(){$("lg").style.display="none";$("ap").style.display="block";R()}
+  document.addEventListener("click",async function(e){
+    var t=e.target, id=t.id, d=t.dataset, x;
+    if(id==="lb"){
+      var ok=$("lu").value.trim()===C.u && (await H($("lp").value))===C.h;
+      if(ok){try{sessionStorage.setItem("gs_"+C.id,"1")}catch(z){}show()}else $("le").textContent="Ulanyjy ady ýa-da parol nädogry";
+    }
+    if(id==="lo"){try{sessionStorage.removeItem("gs_"+C.id)}catch(z){}location.reload()}
+    if(id==="cm"){
+      var n=$("cn").value.trim(), dd=+$("cd").value, g=+$("cg").value;
+      if(!n||dd<1||g<1||!C.servers.length){alert("Ähli ýerleri dolduryň");return}
+      if(C.max&&D.length>=C.max){alert("Kod çägi doldy");return}
+      D.push({n:n,c:code(),u:uid(),d:dd,g:g});S();R();
+    }
+    if(d.ln!==undefined){
+      x=D[+d.ln];var o=t.textContent;t.textContent="Garaş...";
+      var r1=await links(x);t.textContent=o;cp(r1.l.join("\n"),t);
+      if(r1.bad.length)alert("Okalmady (https serwer rugsat bermedi ýa-da ýalňyş): "+r1.bad.join(", "));
+    }
+    if(d.hp!==undefined){x=D[+d.hp];cp("happ://add/"+base()+"/sub/"+x.c+".txt",t)}
+    if(d.fl!==undefined){
+      x=D[+d.fl];var o2=t.textContent;t.textContent="Garaş...";
+      var r2=await sub(x);t.textContent=o2;
+      if(r2.bad.length)alert("Okalmady (https serwer rugsat bermedi ýa-da ýalňyş): "+r2.bad.join(", "));
+      var bl=new Blob([b64(r2.t)],{type:"text/plain"}), a=document.createElement("a");
+      a.href=URL.createObjectURL(bl);a.download=x.c+".txt";document.body.appendChild(a);a.click();a.remove();
+    }
+    if(d.del!==undefined && confirm("Pozmalymy?")){D.splice(+d.del,1);S();R()}
+  });
+  try{if(sessionStorage.getItem("gs_"+C.id))show()}catch(e){}
+}
+function gen(c){
+  var css=":root{--c:"+c.color+"}*{box-sizing:border-box}body{margin:0;background:#02050c;color:#e0efff;font-family:system-ui,sans-serif}h1{margin:0;font-size:22px;color:var(--c);text-shadow:0 0 12px var(--c)}header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--c);box-shadow:0 0 16px var(--c)}.bx{max-width:340px;margin:12vh auto;padding:26px;background:#060d1c;border:1px solid var(--c);border-radius:14px;box-shadow:0 0 24px var(--c)}.bx input,.bx button{width:100%;margin-top:12px}#le{color:#ff5c7a;font-size:13px;min-height:18px;margin-top:8px}main{padding:14px;max-width:760px;margin:0 auto}section,.st>div{background:#060d1c;border:1px solid #12306a;border-radius:12px;padding:14px;margin-bottom:12px}h2{margin:0 0 10px;font-size:16px;color:var(--c)}.st{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.st>div{margin:0}.st span{display:block;font-size:12px;color:#7f9cc4}.st b{font-size:26px;color:var(--c)}.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}input,select{flex:1 1 110px;padding:10px;border:1px solid #12306a;border-radius:8px;background:#030816;color:inherit;font:inherit}button{background:var(--c);color:#02050c;border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}.it{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #0c1d40}.it small,section>small{display:block;color:#7f9cc4;word-break:break-all}.x{background:transparent;border:1px solid #ff5c7a;color:#ff5c7a}";
+  var json=JSON.stringify({id:c.id,name:c.name,u:c.user,h:c.h,servers:c.servers,max:c.max,base:c.base}).replace(/</g,"\\u003c");
+  return '<!DOCTYPE html><html lang="tk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(c.name)+'</title><style>'+css+'</style></head><body><section id="lg" class="bx"><h1>'+esc(c.name)+'</h1><input id="lu" placeholder="Ulanyjy ady" autocomplete="username"><input id="lp" type="password" placeholder="Parol" autocomplete="current-password"><div id="le"></div><button id="lb">Girmek</button></section><div id="ap" style="display:none"><header><h1>'+esc(c.name)+'</h1><button id="lo">Çykmak</button></header><main id="m"></main></div><script>var C='+json+';('+rt.toString()+')(C)<\/script></body></html>';
+}
+function rBS(){
+  $("bsv").innerHTML=servers.map(function(s,i){
+    return "<label class='chk'><input type='checkbox' data-si='"+i+"' "+(s.link?"checked":"disabled")+"> "+esc(s.n)+(s.link?"":" (link ýok)")+"</label>";
+  }).join("")||"<small style='color:var(--mute)'>Ilki Serwerler bölümine serwer goş.</small>";
+}
+function rB(){
+  $("bl").innerHTML=panels.map(function(p,i){
+    return "<div class='srv'><div><b>"+esc(p.name)+"</b><small>login: "+esc(p.user)+" · "+p.servers.length+" serwer · "+esc(p.file)+"</small></div><div style='display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end'><button class='btn sm ghost' data-v='"+i+"'>Gör</button><button class='btn sm ghost' data-y='"+i+"'>Faýl</button><button class='btn sm ghost' data-k='"+i+"'>Kod</button><button class='btn sm del' data-x='"+i+"'>Poz</button></div></div>";
+  }).join("")||"<small style='color:var(--mute)'>Heniz panel ýok.</small>";
+}
+$("sws").onclick=function(e){
+  var c=e.target.dataset.c; if(!c)return; bc=c;
+  [].forEach.call($("sws").children,function(x){x.classList.toggle("on",x===e.target)});
+};
+$("bmk").onclick=async function(){
+  var n=$("bn").value.trim(), u=$("bu").value.trim(), pw=$("bp").value;
+  if(!n||!u||pw.length<6){toast("Ady, login we iň az 6 belgili parol ýaz");return}
+  var sv2=[].filter.call($("bsv").querySelectorAll("input"),function(x){return x.checked}).map(function(x){var q=servers[+x.dataset.si];return {n:q.n,l:q.link}});
+  if(!sv2.length){toast("Iň az bir serwer saýla");return}
+  panels.push({id:slug(n)+"-"+Date.now().toString(36),name:n,user:u,h:await hs(pw),color:bc,servers:sv2,max:Math.max(0,+$("bm").value||0),base:API_URL||("https://"+DOMAIN),file:slug(n)+".html"});
+  sv("vp_panels",panels);$("bn").value="";$("bu").value="";$("bp").value="";rB();toast("Panel döredildi");
+};
+$("bl").onclick=function(e){
+  var d=e.target.dataset, p;
+  if(d.v!==undefined){p=panels[+d.v];$("pv").srcdoc=gen(p);$("mod").classList.remove("hide")}
+  if(d.y!==undefined){
+    p=panels[+d.y];
+    var b=new Blob([gen(p)],{type:"text/html"}), a=document.createElement("a");
+    a.href=URL.createObjectURL(b);a.download=p.file;document.body.appendChild(a);a.click();a.remove();
+  }
+  if(d.k!==undefined){
+    try{navigator.clipboard.writeText(gen(panels[+d.k]));toast("Kod göçürildi")}catch(x){toast("Göçürip bilmedi")}
+  }
+  if(d.x!==undefined && confirm("Paneli pozmalymy?")){panels.splice(+d.x,1);sv("vp_panels",panels);rB()}
+};
+$("mclose").onclick=function(){$("mod").classList.add("hide");$("pv").srcdoc=""};
+rB();rBS();
+</script>
+</body>
+</html>
